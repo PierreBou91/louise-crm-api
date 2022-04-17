@@ -1,6 +1,7 @@
 const express = require("express");
 const { graphqlHTTP } = require("express-graphql");
 const { GraphQLSchema, GraphQLObjectType, GraphQLString } = require("graphql");
+require("dotenv").config();
 
 const app = express();
 const schema = new GraphQLSchema({
@@ -15,7 +16,16 @@ const schema = new GraphQLSchema({
   }),
 });
 
-require("dotenv").config();
+const RootQueryType = new GraphQLObjectType({
+  name: "Query",
+  description: "Root Query",
+  fields: () => ({
+    books: {
+      type: BookType,
+      description: "List of books",
+    },
+  }),
+});
 
 PORT = process.env.PORT;
 
