@@ -1,4 +1,8 @@
 const express = require("express");
+const app = express();
+const cors = require("cors");
+require("dotenv").config();
+
 const { graphqlHTTP } = require("express-graphql");
 const {
   GraphQLSchema,
@@ -9,38 +13,46 @@ const {
   GraphQLNonNull,
   GraphQLBoolean,
 } = require("graphql");
-const cors = require("cors");
-const pool = require("./db");
 
-require("dotenv").config();
+const {
+  pool,
+  selectCommentsdFromPersonId,
+  selectOwnerFromPersonId,
+  selectRoleFromPersonId,
+  selectCreatedByFromCommentId,
+  selectOrgFromPersonId,
+  selectTeamFromPersonId,
+  selectCreatedByFromPersonId,
+  selectOrgFromTeamId,
+  selectCreatedByFromTeamId,
+  selectOwnerFromOrgId,
+  selectCreatedByFromOrgId,
+  selectTeamFromRoleId,
+  selectCreatedByFromRoleId,
+} = require("./db/db");
+
 PORT = process.env.PORT;
 
-const app = express();
+// const authors = [
+//   { id: 1, name: "J. K. Rowling" },
+//   { id: 2, name: "J. R. R. Tolkien" },
+//   { id: 3, name: "Brent Weeks" },
+// ];
 
-const authors = [
-  { id: 1, name: "J. K. Rowling" },
-  { id: 2, name: "J. R. R. Tolkien" },
-  { id: 3, name: "Brent Weeks" },
-];
-
-const books = [
-  { id: 1, name: "Harry Potter and the Chamber of Secrets", authorId: 1 },
-  { id: 2, name: "Harry Potter and the Prisoner of Azkaban", authorId: 1 },
-  { id: 3, name: "Harry Potter and the Goblet of Fire", authorId: 1 },
-  { id: 4, name: "The Fellowship of the Ring", authorId: 2 },
-  { id: 5, name: "The Two Towers", authorId: 2 },
-  { id: 6, name: "The Return of the King", authorId: 2 },
-  { id: 7, name: "The Way of Shadows", authorId: 3 },
-  { id: 8, name: "Beyond the Shadows", authorId: 3 },
-];
+// const books = [
+//   { id: 1, name: "Harry Potter and the Chamber of Secrets", authorId: 1 },
+//   { id: 2, name: "Harry Potter and the Prisoner of Azkaban", authorId: 1 },
+//   { id: 3, name: "Harry Potter and the Goblet of Fire", authorId: 1 },
+//   { id: 4, name: "The Fellowship of the Ring", authorId: 2 },
+//   { id: 5, name: "The Two Towers", authorId: 2 },
+//   { id: 6, name: "The Return of the King", authorId: 2 },
+//   { id: 7, name: "The Way of Shadows", authorId: 3 },
+//   { id: 8, name: "Beyond the Shadows", authorId: 3 },
+// ];
 
 // app.get("/db", async (req, res) => {
 //   try {
-//     // const value = await pool.query(
-//     //   "INSERT INTO persons (name) VALUES ('bibi');"
-//     // );
-//     const value = await pool.query("SELECT * FROM roles where id = 1;");
-//     res.send(value.rows[0]);
+//     res.send(await selectPersonById(3));
 //   } catch (error) {
 //     console.error(error);
 //   }
@@ -49,7 +61,7 @@ const books = [
 const PersonType = new GraphQLObjectType({
   name: "Person",
   description:
-    "This represents a person that can be a user or a contact of a user",
+    "This represents a person that can be a user or a contact of a user.",
   fields: () => ({
     id: { type: GraphQLNonNull(GraphQLInt) },
     first_name: { type: GraphQLNonNull(GraphQLString) },
@@ -58,83 +70,165 @@ const PersonType = new GraphQLObjectType({
     phone: { type: GraphQLString },
     password_hash: { type: GraphQLString },
     is_user: { type: GraphQLBoolean },
-    owner_id: { type: GraphQLInt },
-    team: { type: GraphQLString },
-    organisation: { type: GraphQLString },
+    comments: {
+      type: GraphQLList(CommentType),
+      resolve: (person) => {
+        return selectCommentsdFromPersonId(person.id);
+      },
+    },
+    owner: {
+      type: PersonType,
+      resolve: (person) => {
+        return selectOwnerFromPersonId(person.id);
+      },
+    },
+    team: {
+      type: TeamType,
+      resolve: (person) => {
+        return selectTeamFromPersonId(person.id);
+      },
+    },
+    organisation: {
+      type: OrgType,
+      resolve: (person) => {
+        return selectOrgFromPersonId(person.id);
+      },
+    },
     role: {
       type: RoleType,
-      resolve: async (person) => {
-        const value = await pool.query(
-          `SELECT * FROM roles r WHERE id = (SELECT role_id FROM persons WHERE id = ${person.id});`
-        );
-        console.log(value.rows);
-        const role = value.rows[0];
-        return role;
+      resolve: (person) => {
+        return selectRoleFromPersonId(person.id);
       },
     },
     is_admin: { type: GraphQLBoolean },
     created_at: { type: GraphQLString },
-    created_by: { type: GraphQLNonNull(GraphQLInt) },
+    created_by: {
+      type: PersonType,
+      resolve: (person) => {
+        return selectCreatedByFromPersonId(person.id);
+      },
+    },
     is_deleted: { type: GraphQLBoolean },
   }),
 });
 
-const RoleType = new GraphQLObjectType({
-  name: "Role",
-  description: "The RoleType is a specific role in an organisation",
+const TeamType = new GraphQLObjectType({
+  name: "Team",
+  description: "This is a team",
   fields: () => ({
     id: { type: GraphQLNonNull(GraphQLInt) },
     label: { type: GraphQLNonNull(GraphQLString) },
-    team_id: { type: GraphQLInt },
+    owner_org: {
+      type: OrgType,
+      resolve: (team) => {
+        return selectOrgFromTeamId(team.id);
+      },
+    },
     created_at: { type: GraphQLString },
-    created_by: { type: GraphQLNonNull(GraphQLInt) },
+    created_by: {
+      type: PersonType,
+      resolve: (team) => {
+        return selectCreatedByFromTeamId(team.id);
+      },
+    },
     is_deleted: { type: GraphQLBoolean },
   }),
 });
 
 const OrgType = new GraphQLObjectType({
   name: "Organisation",
-  description: "The RoleType is a specific role in an organisation",
+  description: "This is an organisation",
   fields: () => ({
     id: { type: GraphQLNonNull(GraphQLInt) },
-    label: { type: GraphQLNonNull(GraphQLString) },
-    team_id: { type: GraphQLInt },
+    org_name: { type: GraphQLNonNull(GraphQLString) },
+    is_client: { type: GraphQLBoolean },
+    owner: {
+      type: PersonType,
+      resolve: (org) => {
+        return selectOwnerFromOrgId(org.id);
+      },
+    },
     created_at: { type: GraphQLString },
-    created_by: { type: GraphQLNonNull(GraphQLInt) },
+    created_by: {
+      type: PersonType,
+      resolve: (org) => {
+        return selectCreatedByFromOrgId(org.id);
+      },
+    },
     is_deleted: { type: GraphQLBoolean },
   }),
 });
 
-const BookType = new GraphQLObjectType({
-  name: "Book",
-  description: "This is a Book written by an author",
+const CommentType = new GraphQLObjectType({
+  name: "Comment",
+  description: "This is a comment about a user.",
   fields: () => ({
     id: { type: GraphQLNonNull(GraphQLInt) },
-    name: { type: GraphQLNonNull(GraphQLString) },
-    authorId: { type: GraphQLNonNull(GraphQLInt) },
-    author: {
-      type: AuthorType,
-      resolve: (book) => {
-        return authors.find((author) => author.id === book.authorId);
+    content: { type: GraphQLString },
+    created_at: { type: GraphQLString },
+    created_by: {
+      type: PersonType,
+      resolve: (comment) => {
+        return selectCreatedByFromCommentId(comment.id);
       },
     },
+    is_deleted: { type: GraphQLBoolean },
   }),
 });
 
-const AuthorType = new GraphQLObjectType({
-  name: "Author",
-  description: "Author",
+const RoleType = new GraphQLObjectType({
+  name: "Role",
+  description: "This represents a specific role in a team.",
   fields: () => ({
     id: { type: GraphQLNonNull(GraphQLInt) },
-    name: { type: GraphQLNonNull(GraphQLString) },
-    books: {
-      type: GraphQLList(BookType),
-      resolve: (author) => {
-        return books.filter((book) => book.authorId === author.id);
+    label: { type: GraphQLNonNull(GraphQLString) },
+    team: {
+      type: TeamType,
+      resolve: (role) => {
+        return selectTeamFromRoleId(role.id);
       },
     },
+    created_at: { type: GraphQLString },
+    created_by: {
+      type: PersonType,
+      resolve: (role) => {
+        return selectCreatedByFromRoleId(role.id);
+      },
+    },
+    is_deleted: { type: GraphQLBoolean },
   }),
 });
+
+// const BookType = new GraphQLObjectType({
+//   name: "Book",
+//   description: "This is a Book written by an author",
+//   fields: () => ({
+//     id: { type: GraphQLNonNull(GraphQLInt) },
+//     name: { type: GraphQLNonNull(GraphQLString) },
+//     authorId: { type: GraphQLNonNull(GraphQLInt) },
+//     author: {
+//       type: AuthorType,
+//       resolve: (book) => {
+//         return authors.find((author) => author.id === book.authorId);
+//       },
+//     },
+//   }),
+// });
+
+// const AuthorType = new GraphQLObjectType({
+//   name: "Author",
+//   description: "Author",
+//   fields: () => ({
+//     id: { type: GraphQLNonNull(GraphQLInt) },
+//     name: { type: GraphQLNonNull(GraphQLString) },
+//     books: {
+//       type: GraphQLList(BookType),
+//       resolve: (author) => {
+//         return books.filter((book) => book.authorId === author.id);
+//       },
+//     },
+//   }),
+// });
 
 const RootQueryType = new GraphQLObjectType({
   name: "Query",
@@ -145,83 +239,109 @@ const RootQueryType = new GraphQLObjectType({
       description: "List of persons",
       resolve: async () => {
         const value = await pool.query(
-          "SELECT p.id, p.first_name, p.last_name, p.email, p.phone, p.password_hash, p.is_user, p.owner_id, t.label AS team, o.org_name AS organisation, p.is_admin, p.created_at, p.created_by, p.is_deleted FROM persons AS p LEFT JOIN teams AS t ON t.id = p.team_id LEFT JOIN organisations AS o ON o.id = p.org_id;"
+          "SELECT id, first_name, last_name, email, phone, password_hash, is_user, is_admin, created_at, is_deleted FROM persons;"
         );
         return value.rows;
       },
     },
-    books: {
-      type: new GraphQLList(BookType),
-      description: "List of books",
-      resolve: () => books,
+    organisations: {
+      type: new GraphQLList(OrgType),
+      description: "List of organisations",
+      resolve: () => {
+        return;
+      },
     },
-    authors: {
-      type: new GraphQLList(AuthorType),
-      description: "List of authors",
-      resolve: () => authors,
-    },
-    book: {
-      type: BookType,
-      description: "A single Book",
+    person: {
+      type: PersonType,
+      description: "Query a single person by id",
       args: {
         id: { type: GraphQLInt },
+        first_name: { type: GraphQLString },
       },
-      resolve: (parent, args) => books.find((book) => book.id === args.id),
-    },
-    author: {
-      type: AuthorType,
-      description: "Single author",
-      args: {
-        id: { type: GraphQLInt },
+      resolve: async (person, args) => {
+        for (var arg in args) {
+          console.log(arg);
+          console.log(args[arg]);
+        }
+        const query = await pool.query(
+          `SELECT id, first_name, last_name, email, phone, password_hash, is_user, team_id as team, org_id as organisation, is_admin, created_at, created_by, is_deleted FROM persons WHERE id = ${args.id};`
+        );
+        const single_person = query.rows[0];
+        return single_person;
       },
-      resolve: (parent, args) =>
-        authors.find((author) => author.id === args.id),
     },
+    // books: {
+    //   type: new GraphQLList(BookType),
+    //   description: "List of books",
+    //   resolve: () => books,
+    // },
+    // authors: {
+    //   type: new GraphQLList(AuthorType),
+    //   description: "List of authors",
+    //   resolve: () => authors,
+    // },
+    // book: {
+    //   type: BookType,
+    //   description: "A single Book",
+    //   args: {
+    //     id: { type: GraphQLInt },
+    //   },
+    //   resolve: (parent, args) => books.find((book) => book.id === args.id),
+    // },
+    // author: {
+    //   type: AuthorType,
+    //   description: "Single author",
+    //   args: {
+    //     id: { type: GraphQLInt },
+    //   },
+    //   resolve: (parent, args) =>
+    //     authors.find((author) => author.id === args.id),
+    // },
   }),
 });
 
-const RootMutationType = new GraphQLObjectType({
-  name: "Mutations",
-  description: "Root Mutation",
-  fields: () => ({
-    addBook: {
-      type: BookType,
-      description: "add a book",
-      args: {
-        name: { type: GraphQLNonNull(GraphQLString) },
-        authorId: { type: GraphQLNonNull(GraphQLInt) },
-      },
-      resolve: (parent, args) => {
-        const book = {
-          id: books.length + 1,
-          name: args.name,
-          authorId: args.authorId,
-        };
-        books.push(book);
-        return book;
-      },
-    },
-    addAuthor: {
-      type: AuthorType,
-      description: "add an author",
-      args: {
-        name: { type: GraphQLNonNull(GraphQLString) },
-      },
-      resolve: (parent, args) => {
-        const author = {
-          id: authors.length + 1,
-          name: args.name,
-        };
-        authors.push(author);
-        return author;
-      },
-    },
-  }),
-});
+// const RootMutationType = new GraphQLObjectType({
+// name: "Mutations",
+// description: "Root Mutation",
+// fields: () => ({
+//   addBook: {
+//     type: BookType,
+//     description: "add a book",
+//     args: {
+//       name: { type: GraphQLNonNull(GraphQLString) },
+//       authorId: { type: GraphQLNonNull(GraphQLInt) },
+//     },
+//     resolve: (parent, args) => {
+//       const book = {
+//         id: books.length + 1,
+//         name: args.name,
+//         authorId: args.authorId,
+//       };
+//       books.push(book);
+//       return book;
+//     },
+//   },
+//   addAuthor: {
+//     type: AuthorType,
+//     description: "add an author",
+//     args: {
+//       name: { type: GraphQLNonNull(GraphQLString) },
+//     },
+//     resolve: (parent, args) => {
+//       const author = {
+//         id: authors.length + 1,
+//         name: args.name,
+//       };
+//       authors.push(author);
+//       return author;
+//     },
+//   },
+// }),
+// });
 
 const schema = new GraphQLSchema({
   query: RootQueryType,
-  mutation: RootMutationType,
+  // mutation: RootMutationType,
 });
 
 app.use(
@@ -235,5 +355,5 @@ app.use(
 app.use(cors());
 
 app.listen(PORT, () => {
-  console.log("listening on " + PORT);
+  console.log("Listening on port " + PORT);
 });

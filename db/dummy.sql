@@ -7,8 +7,9 @@ INSERT INTO persons (
     email,
     phone,
     password_hash,
-    phone_id_list,
+    phone_number,
     is_user,
+    comment_id_list,
     owner_id,
     team_id,
     org_id,
@@ -16,9 +17,9 @@ INSERT INTO persons (
     is_admin,
     created_by
 ) VALUES
-(1,'Pierre','Bourbour','pierre@email.com','0639485700','ajkshw7q7w','{1,4}',true,NULL,3,1,NULL,true,1),
-(2,'Chacha','Boulboul','chacha@email.com','0639485701','qwdcs333az','{2}',false,1,1,2,3,false,1),
-(3,'Louise','Bourbour','louise@email.com','0639485702','wipskcj34f','{3}',true,1,2,1,1,false,1);
+(1,'Pierre','Bourbour','pierre@email.com','0639485700','ajkshw7q7w','{1,4}',true,NULL,2,3,1,NULL,true,1),
+(2,'Chacha','Boulboul','chacha@email.com','0639485701','qwdcs333az','{2}',false,NULL,3,1,2,3,false,1),
+(3,'Louise','Bourbour','louise@email.com','0639485702','wipskcj34f','{3}',true,'{1,2}',1,2,1,1,false,1);
 
 INSERT INTO organisations (
     id,
@@ -59,3 +60,11 @@ INSERT INTO roles (
 (1,'Commerciale',2,1),
 (2,'Admin',3,3),
 (3,'Avocate',2,3);
+
+INSERT INTO comments (
+    id,
+    content,
+    created_by
+) VALUES
+(1,'Beautiful and nice', 1),
+(2,'Nice and pretty',1)
