@@ -14,30 +14,6 @@ const {
   GraphQLBoolean,
 } = require("graphql");
 
-// const {
-//   selectCommentsdFromPersonId,
-//   selectCreatedByFromPersonId,
-//   selectActionsFromPersonId,
-//   selectOwnerFromPersonId,
-//   selectRoleFromPersonId,
-//   selectTeamFromPersonId,
-//   selectOrgFromPersonId,
-//   selectCreatedByFromOrgId,
-//   selectOwnerFromOrgId,
-//   selectCreatedByFromTeamId,
-//   selectOrgFromTeamId,
-//   selectCreatedByFromRoleId,
-//   selectTeamFromRoleId,
-//   selectCreatedByFromCommentId,
-//   selectCreatedByFromActionId,
-//   selectContactFromActionId,
-//   selectAllPersons,
-//   selectAllOrgs,
-//   selectAllTeams,
-//   selectAllRoles,
-//   selectAllComments,
-//   selectAllActions,
-// } = require("./db/db");
 const {
   selectCommentsdFromPersonId,
   selectCreatedByFromPersonId,

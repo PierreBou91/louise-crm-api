@@ -138,7 +138,7 @@ async function selectCreatedByFromActionId(actionId) {
 
 async function selectAllPersons() {
   const query =
-    "SELECT id, first_name, last_name, email, phone, password_hash, is_user, is_admin, created_at, is_deleted FROM persons;";
+    "SELECT id, first_name, last_name, email, phone_number as phone, password_hash, is_user, is_admin, created_at, is_deleted FROM persons;";
   const persons = await pool.query(query);
   return persons.rows;
 }
