@@ -5,11 +5,11 @@ INSERT INTO persons (
     first_name,
     last_name,
     email,
-    phone,
     password_hash,
     phone_number,
     is_user,
     comment_id_list,
+    action_id_list,
     owner_id,
     team_id,
     org_id,
@@ -17,9 +17,9 @@ INSERT INTO persons (
     is_admin,
     created_by
 ) VALUES
-(1,'Pierre','Bourbour','pierre@email.com','0639485700','ajkshw7q7w','{1,4}',true,NULL,2,3,1,NULL,true,1),
-(2,'Chacha','Boulboul','chacha@email.com','0639485701','qwdcs333az','{2}',false,NULL,3,1,2,3,false,1),
-(3,'Louise','Bourbour','louise@email.com','0639485702','wipskcj34f','{3}',true,'{1,2}',1,2,1,1,false,1);
+(1,'Pierre','Bourbour','pierre@email.com','ajkshw7q7w','0639485700',true,NULL,NULL,2,3,1,NULL,true,1),
+(2,'Chacha','Boulboul','chacha@email.com','qwdcs333az','0639485701',false,NULL,NULL,3,1,2,3,false,1),
+(3,'Louise','Bourbour','louise@email.com','wipskcj34f','0639485702',true,'{1,2}','{1,2}',1,2,1,1,false,1);
 
 INSERT INTO organisations (
     id,
@@ -44,12 +44,13 @@ INSERT INTO teams (
 INSERT INTO actions (
     id,
     label,
-    owner_id,
+    target_date,
+    is_done,
     contact_id,
     created_by
 ) VALUES
-(1,'Une action 1',3,2,3),
-(2,'Une action 2',3,1,3);
+(1,'Une action 1','2012-08-24 14:00:00 +02:00',false,2,3),
+(2,'Une action 2','2012-08-24 14:00:00 +02:00',false,1,3);
 
 INSERT INTO roles (
     id,

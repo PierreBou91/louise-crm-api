@@ -98,7 +98,7 @@ async function selectCreatedByFromOrgId(orgId) {
 
 async function selectTeamFromRoleId(roleId) {
   const query =
-    "SELECT * FROM roles WHERE id = (SELECT team_id FROM persons WHERE id = $1);";
+    "SELECT * FROM roles WHERE id = (SELECT team_id FROM roles WHERE id = $1);";
   const value = [roleId];
   const team = await pool.query(query, value);
   return team.rows[0];
@@ -112,19 +112,90 @@ async function selectCreatedByFromRoleId(roleId) {
   return createdBy.rows[0];
 }
 
+async function selectContactFromActionId(actionId) {
+  const query =
+    "SELECT * FROM persons WHERE id = (SELECT contact_id FROM actions WHERE id = $1);";
+  const value = [actionId];
+  const owner = await pool.query(query, value);
+  return owner.rows[0];
+}
+
+async function selectActionsFromPersonId(personId) {
+  const query =
+    "SELECT * FROM actions WHERE id = any(SELECT unnest(action_id_list) FROM persons WHERE id = $1);";
+  const value = [personId];
+  const actions = await pool.query(query, value);
+  return actions.rows;
+}
+
+async function selectCreatedByFromActionId(actionId) {
+  const query =
+    "SELECT * FROM persons WHERE id = (SELECT created_by FROM actions WHERE id = $1);";
+  const value = [actionId];
+  const org = await pool.query(query, value);
+  return org.rows[0];
+}
+
+async function selectAllPersons() {
+  const query =
+    "SELECT id, first_name, last_name, email, phone, password_hash, is_user, is_admin, created_at, is_deleted FROM persons;";
+  const persons = await pool.query(query);
+  return persons.rows;
+}
+
+async function selectAllOrgs() {
+  const query =
+    "SELECT id, org_name, is_client, created_at, is_deleted FROM organisations;";
+  const orgs = await pool.query(query);
+  return orgs.rows;
+}
+
+async function selectAllTeams() {
+  const query = "SELECT id, label, created_at, is_deleted FROM teams;";
+  const teams = await pool.query(query);
+  return teams.rows;
+}
+
+async function selectAllRoles() {
+  const query = "SELECT id, label, created_at, is_deleted FROM roles;";
+  const roles = await pool.query(query);
+  return roles.rows;
+}
+
+async function selectAllComments() {
+  const query = "SELECT id, content, created_at, is_deleted FROM comments;";
+  const comments = await pool.query(query);
+  return comments.rows;
+}
+
+async function selectAllActions() {
+  const query =
+    "SELECT id, label, target_date, is_done, created_at, is_deleted FROM actions;";
+  const actions = await pool.query(query);
+  return actions.rows;
+}
+
 module.exports = {
-  pool,
   selectCommentsdFromPersonId,
+  selectCreatedByFromPersonId,
+  selectActionsFromPersonId,
   selectOwnerFromPersonId,
   selectRoleFromPersonId,
-  selectCreatedByFromCommentId,
-  selectOrgFromPersonId,
   selectTeamFromPersonId,
-  selectCreatedByFromPersonId,
-  selectOrgFromTeamId,
-  selectCreatedByFromTeamId,
-  selectOwnerFromOrgId,
+  selectOrgFromPersonId,
   selectCreatedByFromOrgId,
-  selectTeamFromRoleId,
+  selectOwnerFromOrgId,
+  selectCreatedByFromTeamId,
+  selectOrgFromTeamId,
   selectCreatedByFromRoleId,
+  selectTeamFromRoleId,
+  selectCreatedByFromCommentId,
+  selectCreatedByFromActionId,
+  selectContactFromActionId,
+  selectAllPersons,
+  selectAllOrgs,
+  selectAllTeams,
+  selectAllRoles,
+  selectAllComments,
+  selectAllActions,
 };

@@ -14,21 +14,53 @@ const {
   GraphQLBoolean,
 } = require("graphql");
 
+// const {
+//   selectCommentsdFromPersonId,
+//   selectCreatedByFromPersonId,
+//   selectActionsFromPersonId,
+//   selectOwnerFromPersonId,
+//   selectRoleFromPersonId,
+//   selectTeamFromPersonId,
+//   selectOrgFromPersonId,
+//   selectCreatedByFromOrgId,
+//   selectOwnerFromOrgId,
+//   selectCreatedByFromTeamId,
+//   selectOrgFromTeamId,
+//   selectCreatedByFromRoleId,
+//   selectTeamFromRoleId,
+//   selectCreatedByFromCommentId,
+//   selectCreatedByFromActionId,
+//   selectContactFromActionId,
+//   selectAllPersons,
+//   selectAllOrgs,
+//   selectAllTeams,
+//   selectAllRoles,
+//   selectAllComments,
+//   selectAllActions,
+// } = require("./db/db");
 const {
-  pool,
   selectCommentsdFromPersonId,
+  selectCreatedByFromPersonId,
+  selectActionsFromPersonId,
   selectOwnerFromPersonId,
   selectRoleFromPersonId,
-  selectCreatedByFromCommentId,
-  selectOrgFromPersonId,
   selectTeamFromPersonId,
-  selectCreatedByFromPersonId,
-  selectOrgFromTeamId,
-  selectCreatedByFromTeamId,
-  selectOwnerFromOrgId,
+  selectOrgFromPersonId,
   selectCreatedByFromOrgId,
-  selectTeamFromRoleId,
+  selectOwnerFromOrgId,
+  selectCreatedByFromTeamId,
+  selectOrgFromTeamId,
   selectCreatedByFromRoleId,
+  selectTeamFromRoleId,
+  selectCreatedByFromCommentId,
+  selectCreatedByFromActionId,
+  selectContactFromActionId,
+  selectAllPersons,
+  selectAllOrgs,
+  selectAllTeams,
+  selectAllRoles,
+  selectAllComments,
+  selectAllActions,
 } = require("./db/db");
 
 PORT = process.env.PORT;
@@ -100,6 +132,12 @@ const PersonType = new GraphQLObjectType({
         return selectRoleFromPersonId(person.id);
       },
     },
+    actions: {
+      type: GraphQLList(ActionType),
+      resolve: (person) => {
+        return selectActionsFromPersonId(person.id);
+      },
+    },
     is_admin: { type: GraphQLBoolean },
     created_at: { type: GraphQLString },
     created_by: {
@@ -112,9 +150,34 @@ const PersonType = new GraphQLObjectType({
   }),
 });
 
+const ActionType = new GraphQLObjectType({
+  name: "Action",
+  description: "This represents an action that is assigned to a person",
+  fields: () => ({
+    id: { type: GraphQLNonNull(GraphQLInt) },
+    label: { type: GraphQLNonNull(GraphQLString) },
+    target_date: { type: GraphQLString },
+    is_done: { type: GraphQLBoolean },
+    contact: {
+      type: PersonType,
+      resolve: (action) => {
+        return selectContactFromActionId(action.id);
+      },
+    },
+    created_at: { type: GraphQLString },
+    created_by: {
+      type: PersonType,
+      resolve: (action) => {
+        return selectCreatedByFromActionId(action.id);
+      },
+    },
+    is_deleted: { type: GraphQLBoolean },
+  }),
+});
+
 const TeamType = new GraphQLObjectType({
   name: "Team",
-  description: "This is a team",
+  description: "This represents a team that belongs to an organisation",
   fields: () => ({
     id: { type: GraphQLNonNull(GraphQLInt) },
     label: { type: GraphQLNonNull(GraphQLString) },
@@ -137,7 +200,7 @@ const TeamType = new GraphQLObjectType({
 
 const OrgType = new GraphQLObjectType({
   name: "Organisation",
-  description: "This is an organisation",
+  description: "This represents an organisation",
   fields: () => ({
     id: { type: GraphQLNonNull(GraphQLInt) },
     org_name: { type: GraphQLNonNull(GraphQLString) },
@@ -236,40 +299,65 @@ const RootQueryType = new GraphQLObjectType({
   fields: () => ({
     persons: {
       type: new GraphQLList(PersonType),
-      description: "List of persons",
-      resolve: async () => {
-        const value = await pool.query(
-          "SELECT id, first_name, last_name, email, phone, password_hash, is_user, is_admin, created_at, is_deleted FROM persons;"
-        );
-        return value.rows;
+      description: "List of all the persons in the database",
+      resolve: () => {
+        return selectAllPersons();
       },
     },
     organisations: {
       type: new GraphQLList(OrgType),
-      description: "List of organisations",
+      description: "List of all the organisations in the database",
       resolve: () => {
-        return;
+        return selectAllOrgs();
       },
     },
-    person: {
-      type: PersonType,
-      description: "Query a single person by id",
-      args: {
-        id: { type: GraphQLInt },
-        first_name: { type: GraphQLString },
-      },
-      resolve: async (person, args) => {
-        for (var arg in args) {
-          console.log(arg);
-          console.log(args[arg]);
-        }
-        const query = await pool.query(
-          `SELECT id, first_name, last_name, email, phone, password_hash, is_user, team_id as team, org_id as organisation, is_admin, created_at, created_by, is_deleted FROM persons WHERE id = ${args.id};`
-        );
-        const single_person = query.rows[0];
-        return single_person;
+    teams: {
+      type: new GraphQLList(TeamType),
+      description: "List of all the teams in the database",
+      resolve: () => {
+        return selectAllTeams();
       },
     },
+    roles: {
+      type: new GraphQLList(RoleType),
+      description: "List of all the roles in the database",
+      resolve: () => {
+        return selectAllRoles();
+      },
+    },
+    comments: {
+      type: new GraphQLList(CommentType),
+      description: "List of all the comments in the database",
+      resolve: () => {
+        return selectAllComments();
+      },
+    },
+    actions: {
+      type: new GraphQLList(ActionType),
+      description: "List of all the actions in the database",
+      resolve: () => {
+        return selectAllActions();
+      },
+    },
+    // person: {
+    //   type: PersonType,
+    //   description: "Query a single person by id",
+    //   args: {
+    //     id: { type: GraphQLInt },
+    //     first_name: { type: GraphQLString },
+    //   },
+    //   resolve: async (person, args) => {
+    //     for (var arg in args) {
+    //       console.log(arg);
+    //       console.log(args[arg]);
+    //     }
+    //     const query = await pool.query(
+    //       `SELECT id, first_name, last_name, email, phone, password_hash, is_user, team_id as team, org_id as organisation, is_admin, created_at, created_by, is_deleted FROM persons WHERE id = ${args.id};`
+    //     );
+    //     const single_person = query.rows[0];
+    //     return single_person;
+    //   },
+    // },
     // books: {
     //   type: new GraphQLList(BookType),
     //   description: "List of books",

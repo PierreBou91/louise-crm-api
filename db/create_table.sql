@@ -50,7 +50,6 @@ CREATE TABLE actions (
     label VARCHAR NOT NULL,
     target_date TIMESTAMP WITH TIME ZONE,
     is_done BOOLEAN DEFAULT FALSE,
-    owner_id INTEGER,
     contact_id INTEGER,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     created_by INTEGER NOT NULL,
