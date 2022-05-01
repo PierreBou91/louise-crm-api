@@ -6,7 +6,7 @@ DROP TABLE IF EXISTS comments;
 DROP TABLE IF EXISTS roles;
 
 CREATE TABLE persons (
-    id SERIAL PRIMARY KEY,
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     first_name VARCHAR NOT NULL,
     last_name VARCHAR,
     email VARCHAR,
@@ -14,61 +14,61 @@ CREATE TABLE persons (
     password_hash VARCHAR,
     phone_number VARCHAR,
     is_user BOOLEAN DEFAULT FALSE,
-    comment_id_list INTEGER[],
-    action_id_list INTEGER[],
-    owner_id INTEGER,
-    team_id INTEGER,
-    org_id INTEGER,
-    role_id INTEGER,
+    comment_id_list UUID[],
+    action_id_list UUID[],
+    owner_id UUID,
+    team_id UUID,
+    org_id UUID,
+    role_id UUID,
     is_admin BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_by INTEGER NOT NULL,
+    created_by UUID NOT NULL,
     is_deleted BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE organisations (
-    id SERIAL PRIMARY KEY,
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     org_name VARCHAR NOT NULL,
     is_client BOOLEAN DEFAULT FALSE,
-    owner_id INTEGER,
+    owner_id UUID,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_by INTEGER NOT NULL,
+    created_by UUID NOT NULL,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE teams (
-    id SERIAL PRIMARY KEY,
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     label VARCHAR NOT NULL,
-    owner_org_id INTEGER,
+    owner_org_id UUID,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_by INTEGER NOT NULL,
+    created_by UUID NOT NULL,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE actions (
-    id SERIAL PRIMARY KEY,
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     label VARCHAR NOT NULL,
     target_date TIMESTAMP WITH TIME ZONE,
     is_done BOOLEAN DEFAULT FALSE,
-    contact_id INTEGER,
+    contact_id UUID,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_by INTEGER NOT NULL,
+    created_by UUID NOT NULL,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE roles (
-    id SERIAL PRIMARY KEY,
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     label VARCHAR,
-    team_id INTEGER,
+    team_id UUID,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_by INTEGER NOT NULL,
+    created_by UUID NOT NULL,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE comments (
-    id SERIAL PRIMARY KEY,
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     content VARCHAR,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_by INTEGER NOT NULL,
+    created_by UUID NOT NULL,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE
 );
